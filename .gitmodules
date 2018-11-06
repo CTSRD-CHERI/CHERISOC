@@ -1,0 +1,6 @@
+[submodule "TagController"]
+	path = TagController
+	url = https://github.com/CTSRD-CHERI/TagController.git
+[submodule "PISM"]
+	path = PISM
+	url = https://github.com/CTSRD-CHERI/PISM.git
