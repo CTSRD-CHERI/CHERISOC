@@ -52,7 +52,6 @@ BSCFLAGS += -sched-dot
 BSCFLAGS += -show-range-conflict
 #BSCFLAGS += -show-rule-rel \* \*
 #BSCFLAGS += -steps-warn-interval n
-BSCFLAGS += -D MEM128
 BSCFLAGS += -D CAP128
 BSCFLAGS += -D BLUESIM
 
