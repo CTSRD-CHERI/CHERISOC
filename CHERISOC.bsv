@@ -82,20 +82,13 @@ module mkCHERISOC (CHERISOC);
       });
     endinterface;
     interface  b = interface Source;
-      method canGet = berisoc.slave.b.canGet;
-      method   peek = BFlit{
+      method canPeek = berisoc.slave.b.canPeek;
+      method peek = BFlit{
         bid:   truncate(berisoc.slave.b.peek.bid),
         bresp: berisoc.slave.b.peek.bresp,
         buser: berisoc.slave.b.peek.buser
       };
-      method get = actionvalue
-        let x <- berisoc.slave.b.get;
-        return BFlit{
-          bid:   truncate(x.bid),
-          bresp: x.bresp,
-          buser: x.buser
-        };
-      endactionvalue;
+      method drop = berisoc.slave.b.drop;
     endinterface;
     interface ar = interface Sink;
       method canPut = berisoc.slave.ar.canPut;
@@ -114,24 +107,15 @@ module mkCHERISOC (CHERISOC);
       });
     endinterface;
     interface  r = interface Source;
-      method canGet = berisoc.slave.r.canGet;
-      method   peek = RFlit{
+      method canPeek = berisoc.slave.r.canPeek;
+      method peek = RFlit{
         rid:   truncate(berisoc.slave.r.peek.rid),
         rdata: berisoc.slave.r.peek.rdata,
         rresp: berisoc.slave.r.peek.rresp,
         rlast: berisoc.slave.r.peek.rlast,
         ruser: 0
       };
-      method get = actionvalue
-        let x <- berisoc.slave.r.get;
-        return RFlit{
-        rid:   truncate(x.rid),
-        rdata: x.rdata,
-        rresp: x.rresp,
-        rlast: x.rlast,
-        ruser: 0
-        };
-      endactionvalue;
+      method drop = berisoc.slave.r.drop;
     endinterface;
   endinterface;
   method peekIRQs = berisoc.peekIRQs;
