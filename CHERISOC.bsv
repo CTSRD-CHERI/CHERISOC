@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018 Alexandre Joannou
+ * Copyright (c) 2018-2019 Alexandre Joannou
  * Copyright (c) 2019 Peter Rugg
  * All rights reserved.
  *
@@ -38,7 +38,7 @@ export CHERISOC(..);
 export mkCHERISOC;
 
 interface CHERISOC;
-  interface AXISlave#(4, 32, 128, 0, 1, 0, 0, 1) slave;
+  interface AXI4_Slave#(4, 32, 128, 0, 1, 0, 0, 1) slave;
   method Bit#(32) peekIRQs;
 endinterface
 
@@ -55,10 +55,10 @@ endmodule
 import BlueBasics :: *;
 module mkCHERISOC (CHERISOC);
   let berisoc <- mkBERISOC;
-  interface slave = interface AXISlave;
+  interface slave = interface AXI4_Slave;
     interface aw = interface Sink;
       method canPut = berisoc.slave.aw.canPut;
-      method put(x) = berisoc.slave.aw.put(AWFlit{
+      method put(x) = berisoc.slave.aw.put(AXI4_AWFlit{
         awid:     zeroExtend(x.awid),
         awaddr:   x.awaddr,
         awlen:    x.awlen,
@@ -74,7 +74,7 @@ module mkCHERISOC (CHERISOC);
     endinterface;
     interface  w = interface Sink;
       method canPut = berisoc.slave.w.canPut;
-      method put(x) = berisoc.slave.w.put(WFlit{
+      method put(x) = berisoc.slave.w.put(AXI4_WFlit{
         wdata: x.wdata,
         wstrb: x.wstrb,
         wlast: x.wlast,
@@ -83,7 +83,7 @@ module mkCHERISOC (CHERISOC);
     endinterface;
     interface  b = interface Source;
       method canPeek = berisoc.slave.b.canPeek;
-      method peek = BFlit{
+      method peek = AXI4_BFlit{
         bid:   truncate(berisoc.slave.b.peek.bid),
         bresp: berisoc.slave.b.peek.bresp,
         buser: berisoc.slave.b.peek.buser
@@ -92,7 +92,7 @@ module mkCHERISOC (CHERISOC);
     endinterface;
     interface ar = interface Sink;
       method canPut = berisoc.slave.ar.canPut;
-      method put(x) = berisoc.slave.ar.put(ARFlit{
+      method put(x) = berisoc.slave.ar.put(AXI4_ARFlit{
         arid:     zeroExtend(x.arid),
         araddr:   x.araddr,
         arlen:    x.arlen,
@@ -108,7 +108,7 @@ module mkCHERISOC (CHERISOC);
     endinterface;
     interface  r = interface Source;
       method canPeek = berisoc.slave.r.canPeek;
-      method peek = RFlit{
+      method peek = AXI4_RFlit{
         rid:   truncate(berisoc.slave.r.peek.rid),
         rdata: berisoc.slave.r.peek.rdata,
         rresp: berisoc.slave.r.peek.rresp,

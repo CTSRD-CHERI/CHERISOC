@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2018 Alexandre Joannou
+ * Copyright (c) 2018-2019 Alexandre Joannou
  * Copyright (c) 2019 Peter Rugg
  * All rights reserved.
  *
@@ -37,24 +37,24 @@ export BERISOC(..);
 export mkBERISOC;
 
 interface BERISOC;
-  interface AXISlave#(8, 32, 128, 0, 0, 0, 0, 0) slave;
+  interface AXI4_Slave#(8, 32, 128, 0, 0, 0, 0, 0) slave;
   method Bit#(32) peekIRQs;
 endinterface
 
 module mkBERISOC (BERISOC);
   let pism <- mkAXI_PISM;
-  let shim <- mkAXIShim;
+  let shim <- mkAXI4Shim;
   connectAXI(shim.master, pism.axiRdSlave, pism.axiWrSlave);
   interface slave = shim.slave;
   method peekIRQs = pism.peekIRQs;
 endmodule
 
-module connectAXI#(AXIMaster#(8, 32, 128, 0, 0, 0, 0, 0) m,
+module connectAXI#(AXI4_Master#(8, 32, 128, 0, 0, 0, 0, 0) m,
                   AxiRdSlave#(8, 40, 128, 4, 0) sr,
                   AxiWrSlave#(8, 40, 128, 4, 0) sw
                  )(Empty);
 
-  let m_synth <- toAXIMasterSynth(m);
+  let m_synth <- toAXI4_Master_Synth(m);
   let m_aw = m_synth.aw;
   let  m_w = m_synth.w;
   let  m_b = m_synth.b;
@@ -73,9 +73,9 @@ module connectAXI#(AXIMaster#(8, 32, 128, 0, 0, 0, 0, 0) m,
     let len = m_aw.awlen;
     sw.awLEN(unpack(len[3:0]));
     if (valid && len[7:4] != 0) die($format("AW: AXI3 only supports 4-bit LEN field (received 0b%0b)", len));
-    sw.awSIZE(unpack(m_aw.awsize));
+    sw.awSIZE(unpack(pack(m_aw.awsize)));
     sw.awBURST(unpack(pack(m_aw.awburst)));
-    sw.awLOCK((m_aw.awlock) ? unpack(2'b01) : unpack(2'b00));
+    sw.awLOCK((m_aw.awlock == NORMAL) ? unpack(2'b00) : unpack(2'b01));
     sw.awCACHE(unpack(m_aw.awcache));
     sw.awPROT(unpack(m_aw.awprot));
     if (valid && m_aw.awqos != 0) die($format("AW: AXI3 does not support QOS (received 0b%0b)", m_aw.awqos));
@@ -111,9 +111,9 @@ module connectAXI#(AXIMaster#(8, 32, 128, 0, 0, 0, 0, 0) m,
     let len = m_ar.arlen;
     sr.arLEN(unpack(len[3:0]));
     if (valid && len[7:4] != 0) die($format("AR: AXI3 only supports 4-bit LEN field (received 0b%0b)", len));
-    sr.arSIZE(unpack(m_ar.arsize));
+    sr.arSIZE(unpack(pack(m_ar.arsize)));
     sr.arBURST(unpack(pack(m_ar.arburst)));
-    sr.arLOCK((m_ar.arlock) ? unpack(2'b01) : unpack(2'b00));
+    sr.arLOCK((m_ar.arlock == NORMAL) ? unpack(2'b00) : unpack(2'b01));
     sr.arCACHE(unpack(m_ar.arcache));
     sr.arPROT(unpack(m_ar.arprot));
     if (valid && m_ar.arqos != 0) die($format("AR: AXI3 does not support QOS (received 0b%0b)", m_ar.arqos));
