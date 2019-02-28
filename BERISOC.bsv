@@ -29,9 +29,9 @@
 
 package BERISOC;
 
-import             PISM :: *;
-import              AXI :: *;  //Bluestuff AXI
-import              Axi :: *;  //Bluespec builtin AXI used by PISM
+import PISM :: *;
+import  AXI :: *;  //Bluestuff AXI
+import  Axi :: *;  //Bluespec builtin AXI used by PISM
 
 export BERISOC(..);
 export mkBERISOC;
@@ -54,7 +54,8 @@ module connectAXI#(AXI4_Master#(8, 32, 128, 0, 0, 0, 0, 0) m,
                   AxiWrSlave#(8, 40, 128, 4, 0) sw
                  )(Empty);
 
-  let m_synth <- toAXI4_Master_Synth(m);
+  let tmp <- toUnguarded_AXI4_Master(m);
+  let m_synth = toAXI4_Master_Synth(tmp);
   let m_aw = m_synth.aw;
   let  m_w = m_synth.w;
   let  m_b = m_synth.b;
@@ -96,11 +97,9 @@ module connectAXI#(AXI4_Master#(8, 32, 128, 0, 0, 0, 0, 0) m,
     m_w.wready(sw.wREADY);
   endrule
 
-  rule bChannel;
-    m_b.bid(sw.bID);
-    m_b.bresp(unpack(pack(sw.bRESP)));
-    m_b.buser(0); //XXX could use a don't care ?
-    m_b.bvalid(sw.bVALID);
+  rule bChannel(sw.bVALID);
+    //XXX could use a don't care ? for user field
+    m_b.bflit(sw.bID, unpack(pack(sw.bRESP)), 0);
     sw.bREADY(m_b.bready);
   endrule
 
@@ -123,13 +122,9 @@ module connectAXI#(AXI4_Master#(8, 32, 128, 0, 0, 0, 0, 0) m,
     m_ar.arready(sr.arREADY);
   endrule
 
-  rule rChannel;
-    m_r.rid(sr.rID);
-    m_r.rdata(sr.rDATA);
-    m_r.rresp(unpack(pack(sr.rRESP)));
-    m_r.rlast(sr.rLAST);
-    m_r.ruser(0); //XXX could use a don't care ?
-    m_r.rvalid(sr.rVALID);
+  rule rChannel(sr.rVALID);
+    //XXX could use a don't care ? for user field
+    m_r.rflit(sr.rID, sr.rDATA, unpack(pack(sr.rRESP)),sr.rLAST, 0);
     sr.rREADY(m_r.rready);
   endrule
 
