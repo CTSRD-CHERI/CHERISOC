@@ -42,7 +42,7 @@ interface CHERISOC;
   method Bit#(32) peekIRQs;
 endinterface
 
-`define IGNORE_TAGS
+//`define IGNORE_TAGS
 `ifndef IGNORE_TAGS
 module mkCHERISOC (CHERISOC);
   let tagcontroller <- mkTagControllerAXI;
