@@ -36,12 +36,12 @@ import  Axi :: *;  //Bluespec builtin AXI used by PISM
 export BERISOC(..);
 export mkBERISOC;
 
-interface BERISOC;
-  interface AXI4_Slave#(8, 32, 128, 0, 0, 0, 0, 0) slave;
+interface BERISOC#(numeric type addr_);
+  interface AXI4_Slave#(8, addr_, 128, 0, 0, 0, 0, 0) slave;
   method Bit#(32) peekIRQs;
 endinterface
 
-module mkBERISOC (BERISOC);
+module mkBERISOC (BERISOC#(addr_)) provisos (Add#(a__, addr_, 64));
   let pism <- mkAXI_PISM;
   let shim <- mkAXI4Shim;
   connectAXI(shim.master, pism.axiRdSlave, pism.axiWrSlave);
@@ -49,10 +49,10 @@ module mkBERISOC (BERISOC);
   method peekIRQs = pism.peekIRQs;
 endmodule
 
-module connectAXI#(AXI4_Master#(8, 32, 128, 0, 0, 0, 0, 0) m,
+module connectAXI#(AXI4_Master#(8, addr_, 128, 0, 0, 0, 0, 0) m,
                   AxiRdSlave#(8, 40, 128, 4, 0) sr,
                   AxiWrSlave#(8, 40, 128, 4, 0) sw
-                 )(Empty);
+                 ) (Empty) provisos (Add#(a__, addr_, 64));
 
   let tmp <- toUnguarded_AXI4_Master(m);
   let m_synth = toAXI4_Master_Synth(tmp);
@@ -70,7 +70,10 @@ module connectAXI#(AXI4_Master#(8, 32, 128, 0, 0, 0, 0, 0) m,
   rule awChannel;
     let valid = m_aw.awvalid;
     sw.awID(m_aw.awid);
-    sw.awADDR(zeroExtend(m_aw.awaddr));
+    //XXX horrible hack - from 40 bits restriction
+    // support addresses up to 64 bits, only considers bottom 40 bits
+    Bit#(64) tmp = zeroExtend(m_aw.awaddr);
+    sw.awADDR(truncate(tmp));
     let len = m_aw.awlen;
     sw.awLEN(unpack(len[3:0]));
     if (valid && len[7:4] != 0) die($format("AW: AXI3 only supports 4-bit LEN field (received 0b%0b)", len));
@@ -106,7 +109,10 @@ module connectAXI#(AXI4_Master#(8, 32, 128, 0, 0, 0, 0, 0) m,
   rule arChannel;
     let valid = m_ar.arvalid;
     sr.arID(m_ar.arid);
-    sr.arADDR(zeroExtend(m_ar.araddr));
+    //XXX horrible hack - from 40 bits restriction
+    // support addresses up to 64 bits, only considers bottom 40 bits
+    Bit#(64) tmp = zeroExtend(m_ar.araddr);
+    sr.arADDR(truncate(tmp));
     let len = m_ar.arlen;
     sr.arLEN(unpack(len[3:0]));
     if (valid && len[7:4] != 0) die($format("AR: AXI3 only supports 4-bit LEN field (received 0b%0b)", len));

@@ -37,23 +37,30 @@ import              AXI :: *;
 export CHERISOC(..);
 export mkCHERISOC;
 
-interface CHERISOC;
-  interface AXI4_Slave#(4, 32, 128, 0, 1, 0, 0, 1) slave;
+`ifdef CAP64
+`define AXI_USR 2
+`else // CAP128
+`define AXI_USR 1
+`endif
+
+interface CHERISOC#(numeric type addr_);
+  interface AXI4_Slave#(4, addr_, 128, 0, `AXI_USR, 0, 0, `AXI_USR) slave;
   method Bit#(32) peekIRQs;
 endinterface
 
 //`define IGNORE_TAGS
 `ifndef IGNORE_TAGS
-module mkCHERISOC (CHERISOC);
-  let tagcontroller <- mkTagControllerAXI;
-  let berisoc <- mkBERISOC;
-  mkConnection(tagcontroller.master, berisoc.slave);
+module mkCHERISOC (CHERISOC#(addr_)) provisos (Add#(a__, addr_, 64));
+  TagControllerAXI#(4, addr_, 128) tagcontroller <- mkTagControllerAXI;
+  AXI4_Master#(8, addr_, 128, 0, 0, 0, 0, 0) tcmaster = extendIDFields(tagcontroller.master, 0);
+  BERISOC#(addr_) berisoc <- mkBERISOC;
+  mkConnection(tcmaster, berisoc.slave);
   interface slave = tagcontroller.slave;
   method peekIRQs = berisoc.peekIRQs;
 endmodule
 `else
 import BlueBasics :: *;
-module mkCHERISOC (CHERISOC);
+module mkCHERISOC (CHERISOC#(addr_)) provisos (Add#(a__, addr_, 64));
   let berisoc <- mkBERISOC;
   interface slave = interface AXI4_Slave;
     interface aw = interface Sink;
