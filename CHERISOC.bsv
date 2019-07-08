@@ -44,7 +44,7 @@ export mkCHERISOC;
 `endif
 
 interface CHERISOC#(numeric type addr_);
-  interface AXI4_Slave#(4, addr_, 128, 0, `AXI_USR, 0, 0, `AXI_USR) slave;
+  interface AXI4_Slave#(5, addr_, 128, 0, `AXI_USR, 0, 0, `AXI_USR) slave;
   method Bit#(32) peekIRQs;
 endinterface
 
@@ -52,7 +52,7 @@ endinterface
 //`define AXI_TRACE
 `ifndef IGNORE_TAGS
 module mkCHERISOC (CHERISOC#(addr_)) provisos (Add#(a__, addr_, 64));
-  TagControllerAXI#(4, addr_, 128) tagcontroller <- mkTagControllerAXI;
+  TagControllerAXI#(5, addr_, 128) tagcontroller <- mkTagControllerAXI;
   AXI4_Master#(8, addr_, 128, 0, 0, 0, 0, 0) tcmaster = extendIDFields(tagcontroller.master, 0);
   BERISOC#(addr_) berisoc <- mkBERISOC;
   mkConnection(tcmaster, berisoc.slave);
