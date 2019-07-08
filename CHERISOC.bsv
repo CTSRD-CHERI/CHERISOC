@@ -49,20 +49,25 @@ interface CHERISOC#(numeric type addr_);
 endinterface
 
 //`define IGNORE_TAGS
+//`define AXI_TRACE
 `ifndef IGNORE_TAGS
 module mkCHERISOC (CHERISOC#(addr_)) provisos (Add#(a__, addr_, 64));
   TagControllerAXI#(4, addr_, 128) tagcontroller <- mkTagControllerAXI;
   AXI4_Master#(8, addr_, 128, 0, 0, 0, 0, 0) tcmaster = extendIDFields(tagcontroller.master, 0);
   BERISOC#(addr_) berisoc <- mkBERISOC;
   mkConnection(tcmaster, berisoc.slave);
+  `ifdef AXI_TRACE
+  interface slave = debugAXI4_Slave(tagcontroller.slave, $format("CHERISOC"));
+  `else
   interface slave = tagcontroller.slave;
+  `endif
   method peekIRQs = berisoc.peekIRQs;
 endmodule
 `else
 import BlueBasics :: *;
 module mkCHERISOC (CHERISOC#(addr_)) provisos (Add#(a__, addr_, 64));
   let berisoc <- mkBERISOC;
-  interface slave = interface AXI4_Slave;
+  let slv = interface AXI4_Slave;
     interface aw = interface Sink;
       method canPut = berisoc.slave.aw.canPut;
       method put(x) = berisoc.slave.aw.put(AXI4_AWFlit{
@@ -125,6 +130,11 @@ module mkCHERISOC (CHERISOC#(addr_)) provisos (Add#(a__, addr_, 64));
       method drop = berisoc.slave.r.drop;
     endinterface;
   endinterface;
+  `ifdef AXI_TRACE
+  interface slave = debugAXI4_Slave(slv, $format("CHERISOC"));
+  `else
+  interface slave = slv;
+  `endif
   method peekIRQs = berisoc.peekIRQs;
 endmodule
 `endif
